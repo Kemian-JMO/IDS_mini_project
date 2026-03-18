@@ -23,6 +23,7 @@ async function preload() {
 
 function setup() {
   createCanvas(640, 640);
+  background(200);
   camera = createCapture(VIDEO);
   camera.size(width, height);
   camera.hide();
@@ -98,7 +99,7 @@ async function detectFrame() {
   const boxes = await parseDetections(outputs);
   //console.log('boxes before NMS:', boxes.length);
   detections = nms(boxes, 0.45);
-  console.log('boxes after NMS:', detections.length);
+  //console.log('boxes after NMS:', detections.length);
 
   outputs.forEach(t => t.dispose());
   isDetecting = false;
@@ -124,7 +125,7 @@ async function parseDetections(outputs) {
           const conf = sigmoid(raw[offset + 4]);
           if (conf < CONF_THRESHOLD) continue;
 
-          const cx = (sigmoid(raw[offset + 0]) * 2 - 0.5 + x) * stride;
+          const cx = (sigmoid(raw[offset]) * 2 - 0.5 + x) * stride;
           const cy = (sigmoid(raw[offset + 1]) * 2 - 0.5 + y) * stride;
           const w  = Math.pow(sigmoid(raw[offset + 2]) * 2, 2) * anchors[i][a][0] * stride;
           const h  = Math.pow(sigmoid(raw[offset + 3]) * 2, 2) * anchors[i][a][1] * stride;
