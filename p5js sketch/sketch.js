@@ -15,6 +15,9 @@ const anchors = [
   [[2.25, 3.03125], [3.84375, 5.125], [6.53125, 9.28125]]
 ];
 
+//Start a webserver with python in terminal
+//python -m http.server 8080
+
 async function preload() {
   emotionModel = await tf.loadGraphModel('emotion/model.json');
   faceModel = await tf.loadGraphModel('face/model.json');
