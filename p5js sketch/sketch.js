@@ -3,6 +3,11 @@ let detections = [];
 let isDetecting = false;
 let camera;
 let modelsLoaded = false;
+let isconnected = false;
+
+// Replace with your ESP32's IP address
+let esp32IP = '10.104.67.55'; // Example, find your ESP32's IP in the Serial Monitor
+let port = 81; // Same port as on the ESP32
 
 const anchors = [
   [[0.5, 0.625], [0.75, 1.0], [1.25, 1.5]],
@@ -21,6 +26,35 @@ function setup() {
   camera = createCapture(VIDEO);
   camera.size(width, height);
   camera.hide();
+
+
+  socket = new WebSocket('ws://' + esp32IP + ':' + port);
+
+  socket.onopen = function(event) {
+    console.log('Connected to ESP32 WebSocket server');
+    isconnected = true;
+  };
+
+  socket.onmessage = function(event) {
+    console.log('Received from ESP32: ' + event.data);
+  };
+
+  socket.onclose = function(event) {
+    console.log('Disconnected from ESP32 WebSocket server');
+    isconnected = false;
+  };
+
+  socket.onerror = function(error) {
+    console.error('WebSocket error:', error);
+    isconnected = false;
+  };
+
+  let openButton = createButton("open");
+  openButton.mousePressed(() => sendSignal("open")); // Send open signal on click
+  let closeButton = createButton("close");
+  closeButton.mousePressed(() => sendSignal("close")); // Send close signal on click
+
+
 }
 
 function draw() {
@@ -37,6 +71,7 @@ function draw() {
     textSize(16);
     text((d.conf * 100).toFixed(0) + '%', d.x, d.y - 4);
   }
+  connect();
 }
 
 async function detectFrame() {
@@ -61,7 +96,7 @@ async function detectFrame() {
   input.dispose();
 
   const boxes = await parseDetections(outputs);
-  console.log('boxes before NMS:', boxes.length);
+  //console.log('boxes before NMS:', boxes.length);
   detections = nms(boxes, 0.45);
   console.log('boxes after NMS:', detections.length);
 
@@ -141,4 +176,20 @@ function iou(a, b) {
   const unionArea = a.w * a.h + b.w * b.h - intersection;
 
   return intersection / unionArea;
+}
+
+// Function to send signal to ESP32 via WebSocket
+function sendSignal(signal) {
+  if (socket.readyState === WebSocket.OPEN) {
+    socket.send(signal);
+    console.log("Sent:", signal);
+  } else {
+    console.log("Socket is not open. Cannot send message.");
+  }
+}
+
+async function connect(){
+  if (!isconnected) {
+	socket = new WebSocket('ws://' + esp32IP + ':' + port);
+  }
 }
