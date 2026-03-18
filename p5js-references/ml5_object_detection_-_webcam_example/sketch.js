@@ -7,7 +7,7 @@
  */
 
 let video;
-let model;
+let detector;
 let detections = [];
 
 function preload(){
